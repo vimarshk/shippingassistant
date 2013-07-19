@@ -1,0 +1,136 @@
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+
+import com.easypost.EasyPost;
+import com.easypost.exception.EasyPostException;
+import com.easypost.model.Address;
+import com.easypost.model.Parcel;
+import com.easypost.model.CustomsItem;
+import com.easypost.model.CustomsInfo;
+import com.easypost.model.Shipment;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+public class starter {
+
+    public static void main(String[] args) {
+        EasyPost.apiKey = "cueqNZUb3ldeWTNX7MU3Mel8UXtaAMUi";
+
+        Map<String, Object> fromAddressMap = new HashMap<String, Object>();
+        fromAddressMap.put("name", "Vimarsh Karbhari");
+        fromAddressMap.put("street1", "2707 Portland St");
+        fromAddressMap.put("street2", "Apt 10");
+        fromAddressMap.put("city", "Los Angeles");
+        fromAddressMap.put("state", "CA");
+        fromAddressMap.put("zip", "90007");
+        fromAddressMap.put("phone", "415-456-7890");
+
+        Map<String, Object> toAddressMap = new HashMap<String, Object>();
+        toAddressMap.put("name", "Vimarsh Karbhari");
+        toAddressMap.put("street1", "2353 Portland St");
+        toAddressMap.put("street2", "");
+        toAddressMap.put("city", "Los Angeles");
+        toAddressMap.put("state", "CA");
+        toAddressMap.put("zip", "90007");
+        toAddressMap.put("phone", "780-483-2746");
+        toAddressMap.put("country", "US");
+
+        Map<String, Object> parcelMap = new HashMap<String, Object>();
+        parcelMap.put("weight", 35.9);
+        parcelMap.put("height", 12.1);
+        parcelMap.put("width", 8);
+        parcelMap.put("length", 19.8);
+
+        /*Map<String, Object> customsItem1Map = new HashMap<String, Object>();
+        customsItem1Map.put("description", "EasyPost T-shirts");
+        customsItem1Map.put("quantity", 2);
+        customsItem1Map.put("value", 23.56);
+        customsItem1Map.put("weight", 18.8);
+        customsItem1Map.put("origin_country", "us");
+        customsItem1Map.put("hs_tariff_number", "123456");
+
+        Map<String, Object> customsItem2Map = new HashMap<String, Object>();
+        customsItem2Map.put("description", "EasyPost Stickers");
+        customsItem2Map.put("quantity", 11);
+        customsItem2Map.put("value", 8.98);
+        customsItem2Map.put("weight", 3.2);
+        customsItem2Map.put("origin_country", "us");
+        customsItem2Map.put("hs_tariff_number", "654321");*/
+
+        try {
+            Address fromAddress = Address.create(fromAddressMap);
+            Address toAddress = Address.create(toAddressMap);
+            Parcel parcel = Parcel.create(parcelMap);
+
+            // Address verified = to_address.verify();
+
+            // customs
+           /* Map<String, Object> customsInfoMap = new HashMap<String, Object>();
+            customsInfoMap.put("integrated_form_type", "form_2976");
+            customsInfoMap.put("customs_certify", true);
+            customsInfoMap.put("customs_signer", "Dr. Pepper");
+            customsInfoMap.put("contents_type", "gift");
+            customsInfoMap.put("eel_pfc", "NOEEI 30.37(a)");
+            customsInfoMap.put("non_delivery_option", "return");
+            customsInfoMap.put("restriction_type", "none");
+            CustomsItem customsItem1 = CustomsItem.create(customsItem1Map);
+            CustomsItem customsItem2 = CustomsItem.create(customsItem2Map);
+            List<CustomsItem> customsItemsList = new ArrayList<CustomsItem>();
+            customsItemsList.add(customsItem1);
+            customsItemsList.add(customsItem2);
+            customsInfoMap.put("customs_items", customsItemsList);
+            CustomsInfo customsInfo = CustomsInfo.create(customsInfoMap);*/
+
+            // create shipment
+            Map<String, Object> shipmentMap = new HashMap<String, Object>();
+            shipmentMap.put("to_address", toAddress);
+            shipmentMap.put("from_address", fromAddress);
+            shipmentMap.put("parcel", parcel);
+            //shipmentMap.put("customs_info", customsInfo);
+
+            Shipment shipment = Shipment.create(shipmentMap);
+
+            // buy postage
+            /*List<String> buyCarriers = new ArrayList<String>();
+            buyCarriers.add("USPS");
+            List<String> buyServices = new ArrayList<String>();
+            buyServices.add("PriorityMailInternational");
+
+            shipment = shipment.buy(shipment.lowestRate(buyCarriers, buyServices));
+
+            System.out.println(shipment.prettyPrint());*/
+            
+            shipment = shipment.newRates(shipmentMap);
+            String jsonshipment = shipment.prettyPrint();
+            int jsonshopment1 = jsonshipment.indexOf('>', 0);
+            jsonshopment1+=7;
+            System.out.println(jsonshopment1);
+            String ship = jsonshipment.substring(jsonshopment1);
+            System.out.println(ship);
+            
+            JsonElement jelement = new JsonParser().parse(ship);
+            JsonObject jobject = jelement.getAsJsonObject();
+            //jobject = jobject.getAsJsonObject(ship);
+            JsonArray jarray= jobject.getAsJsonArray("rates");
+            System.out.println("Carrier" + "  " + "Service" +"   "+ " Cost ");
+            for(int i=0;i<jarray.size();i++)
+            {
+            jobject = jarray.get(i).getAsJsonObject();
+            String resultrate = jobject.get("rate").toString();
+            String resultcarrier = jobject.get("carrier").toString();
+            String resultservice = jobject.get("service").toString();
+            System.out.println(resultcarrier + "  " + resultservice +" "+resultrate);
+            }
+            
+            
+
+        } catch (EasyPostException e) {
+            e.printStackTrace();
+        }
+    }
+}
